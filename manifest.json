@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-ai-auto-tagger",
+  "name": "AI Auto Tagger",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Automatically generate tags for your notes using AI (Gemini).",
+  "author": "Oyuk",
+  "authorUrl": "https://github.com/oyuk/ai_tagger",
+  "isDesktopOnly": false
+}
