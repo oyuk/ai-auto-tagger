@@ -5,6 +5,6 @@
   "minAppVersion": "0.15.0",
   "description": "Automatically generate tags for your notes using AI (Gemini).",
   "author": "Oyuk",
-  "authorUrl": "https://github.com/oyuk/ai_tagger",
+  "authorUrl": "https://github.com/oyuk/ai_auto_tagger",
   "isDesktopOnly": false
 }
