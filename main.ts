@@ -94,7 +94,6 @@ ${content}
       const response = await result.response;
       // Structured output returns a valid JSON string directly
       const tagsRaw: string[] = JSON.parse(response.text());
-      console.log('Raw tags from Gemini:', tagsRaw);
 
       // Sanitize tags client-side to enforce rules
       const tags = tagsRaw.map(tag => {
@@ -103,7 +102,6 @@ ${content}
           .replace(/^#/, '')    // Remove leading #
           .replace(/[#,\[\]()]/g, ''); // Remove other forbidden chars
       }).filter(tag => tag.length > 0);
-      console.log('Sanitized tags:', tags);
 
       await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
         if (!frontmatter['tags']) {
@@ -147,13 +145,16 @@ class AutoTaggerSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Gemini API Key')
       .setDesc('Enter your Google Gemini API Key')
-      .addText(text => text
-        .setPlaceholder('API Key')
-        .setValue(this.plugin.settings.geminiApiKey)
-        .onChange(async (value) => {
-          this.plugin.settings.geminiApiKey = value;
-          await this.plugin.saveSettings();
-        }));
+      .addText(text => {
+        text
+          .setPlaceholder('API Key')
+          .setValue(this.plugin.settings.geminiApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.geminiApiKey = value;
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.type = 'password';
+      }));
 
     new Setting(containerEl)
       .setName('Gemini Model Name')

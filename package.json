@@ -1,7 +1,7 @@
 {
   "name": "obsidian-ai-auto-tagger",
   "version": "1.0.0",
-  "description": "Auto-tag your notes using AI (Gemini)",
+  "description": "Auto-tag your notes using AI",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
