@@ -923,7 +923,8 @@ var DEFAULT_SETTINGS = {
   geminiApiKey: "",
   maxTags: 5,
   geminiModel: "gemini-2.5-flash",
-  useExistingTags: false
+  useExistingTags: false,
+  outputLanguage: "Auto"
 };
 var AutoTaggerPlugin = class extends import_obsidian.Plugin {
   async onload() {
@@ -976,8 +977,11 @@ var AutoTaggerPlugin = class extends import_obsidian.Plugin {
 [${allTags.join(", ")}]
 `;
       }
+      let languageInstructions = `Output the tags in the following language: ${this.settings.outputLanguage === "Auto" ? "Identify the main language of the provided article/text and output the tags in that same language" : this.settings.outputLanguage}.`;
       const prompt = `
 Analyze the following text and generate up to ${this.settings.maxTags} tags that best represent its content.
+${languageInstructions}
+
 **IMPORTANT: Strictly follow Obsidian's tag naming conventions.**
 1. **NEVER** use spaces.
 2. Connect words containing spaces like "Gemini API" with underscores like "Gemini_API" (do not use hyphens).
@@ -990,11 +994,9 @@ ${content}
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const tagsRaw = JSON.parse(response.text());
-      console.log("Raw tags from Gemini:", tagsRaw);
       const tags = tagsRaw.map((tag) => {
         return tag.trim().replace(/[ \u3000]+/g, "_").replace(/^#/, "").replace(/[#,\[\]()]/g, "");
       }).filter((tag) => tag.length > 0);
-      console.log("Sanitized tags:", tags);
       await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
         if (!frontmatter["tags"]) {
           frontmatter["tags"] = [];
@@ -1021,16 +1023,23 @@ var AutoTaggerSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Gemini API Key").setDesc("Enter your Google Gemini API Key").addText((text) => text.setPlaceholder("API Key").setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => {
-      this.plugin.settings.geminiApiKey = value;
-      await this.plugin.saveSettings();
-    }));
+    new import_obsidian.Setting(containerEl).setName("Gemini API Key").setDesc("Enter your Google Gemini API Key").addText((text) => {
+      text.setPlaceholder("API Key").setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => {
+        this.plugin.settings.geminiApiKey = value;
+        await this.plugin.saveSettings();
+      });
+      text.inputEl.type = "password";
+    });
     new import_obsidian.Setting(containerEl).setName("Gemini Model Name").setDesc("Specify the model name (e.g. gemini-2.5-flash)").addText((text) => text.setPlaceholder("gemini-2.5-flash").setValue(this.plugin.settings.geminiModel).onChange(async (value) => {
       this.plugin.settings.geminiModel = value;
       await this.plugin.saveSettings();
     }));
     new import_obsidian.Setting(containerEl).setName("Reuse Existing Tags").setDesc("Use existing tags from the vault as context to prevent inconsistencies. \nNote: If you have many tags, this increases the context size and may increase API costs.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useExistingTags).onChange(async (value) => {
       this.plugin.settings.useExistingTags = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("Tag Output Language").setDesc("Select the language for the generated tags.").addDropdown((dropdown) => dropdown.addOption("Auto", "Auto (Match Article)").addOption("English", "English").addOption("Japanese", "Japanese").setValue(this.plugin.settings.outputLanguage).onChange(async (value) => {
+      this.plugin.settings.outputLanguage = value;
       await this.plugin.saveSettings();
     }));
     new import_obsidian.Setting(containerEl).setName("Max Tags").setDesc("Maximum number of tags to generate").addText((text) => text.setPlaceholder("5").setValue(String(this.plugin.settings.maxTags)).onChange(async (value) => {

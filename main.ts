@@ -6,13 +6,15 @@ interface AutoTaggerSettings {
   maxTags: number;
   geminiModel: string;
   useExistingTags: boolean;
+  outputLanguage: string;
 }
 
 const DEFAULT_SETTINGS: AutoTaggerSettings = {
   geminiApiKey: '',
   maxTags: 5,
   geminiModel: 'gemini-2.5-flash',
-  useExistingTags: false
+  useExistingTags: false,
+  outputLanguage: 'Auto'
 }
 
 export default class AutoTaggerPlugin extends Plugin {
@@ -78,8 +80,12 @@ export default class AutoTaggerPlugin extends Plugin {
 `;
       }
 
+      let languageInstructions = `Output the tags in the following language: ${this.settings.outputLanguage === 'Auto' ? 'Identify the main language of the provided article/text and output the tags in that same language' : this.settings.outputLanguage}.`;
+
       const prompt = `
 Analyze the following text and generate up to ${this.settings.maxTags} tags that best represent its content.
+${languageInstructions}
+
 **IMPORTANT: Strictly follow Obsidian's tag naming conventions.**
 1. **NEVER** use spaces.
 2. Connect words containing spaces like "Gemini API" with underscores like "Gemini_API" (do not use hyphens).
@@ -154,7 +160,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
         text.inputEl.type = 'password';
-      }));
+      });
 
     new Setting(containerEl)
       .setName('Gemini Model Name')
@@ -174,6 +180,19 @@ class AutoTaggerSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.useExistingTags)
         .onChange(async (value) => {
           this.plugin.settings.useExistingTags = value;
+          await this.plugin.saveSettings();
+        }));
+
+    new Setting(containerEl)
+      .setName('Tag Output Language')
+      .setDesc('Select the language for the generated tags.')
+      .addDropdown(dropdown => dropdown
+        .addOption('Auto', 'Auto (Match Article)')
+        .addOption('English', 'English')
+        .addOption('Japanese', 'Japanese')
+        .setValue(this.plugin.settings.outputLanguage)
+        .onChange(async (value) => {
+          this.plugin.settings.outputLanguage = value;
           await this.plugin.saveSettings();
         }));
 
