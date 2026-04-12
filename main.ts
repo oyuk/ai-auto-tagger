@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface AutoTaggerSettings {
@@ -51,7 +51,7 @@ export default class AutoTaggerPlugin extends Plugin {
     if (!file) return;
 
     if (!this.settings.geminiApiKey) {
-      new Notice("Please set your Gemini API Key in the settings.");
+      new Notice("Please set your Gemini API key in the settings.");
       return;
     }
 
@@ -63,17 +63,18 @@ export default class AutoTaggerPlugin extends Plugin {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
-            type: "ARRAY" as any,
+            type: "ARRAY" as never,
             items: {
-              type: "STRING" as any,
-            } as any,
+              type: "STRING" as never,
+            } as never,
           },
         },
       });
 
       let existingTagsString = "";
       if (this.settings.useExistingTags) {
-        const allTags = Object.keys((this.app.metadataCache as any).getTags()).map((tag: string) => tag.replace(/^#/, ''));
+        const metadataCache = this.app.metadataCache as unknown as { getTags(): Record<string, number> };
+        const allTags = Object.keys(metadataCache.getTags()).map((tag: string) => tag.replace(/^#/, ''));
         existingTagsString = `
 **Please select appropriate tags from the following existing tag list as much as possible (to prevent inconsistencies):**
 [${allTags.join(', ')}]
@@ -97,7 +98,7 @@ ${content}
             `;
 
       const result = await model.generateContent(prompt);
-      const response = await result.response;
+      const response = result.response;
       // Structured output returns a valid JSON string directly
       const tagsRaw: string[] = JSON.parse(response.text());
 
@@ -106,7 +107,7 @@ ${content}
         return tag.trim()
           .replace(/[ \u3000]+/g, '_') // Replace spaces (half/full width) with underscores
           .replace(/^#/, '')    // Remove leading #
-          .replace(/[#,\[\]()]/g, ''); // Remove other forbidden chars
+          .replace(/[#,[\]()]/g, ''); // Remove other forbidden chars
       }).filter(tag => tag.length > 0);
 
       await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -149,11 +150,11 @@ class AutoTaggerSettingTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName('Gemini API Key')
-      .setDesc('Enter your Google Gemini API Key')
+      .setName('Gemini API key')
+      .setDesc('Enter your Google Gemini API key')
       .addText(text => {
         text
-          .setPlaceholder('API Key')
+          .setPlaceholder('API key')
           .setValue(this.plugin.settings.geminiApiKey)
           .onChange(async (value) => {
             this.plugin.settings.geminiApiKey = value;
@@ -163,7 +164,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Gemini Model Name')
+      .setName('Gemini model name')
       .setDesc('Specify the model name (e.g. gemini-2.5-flash)')
       .addText(text => text
         .setPlaceholder('gemini-2.5-flash')
@@ -174,7 +175,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Reuse Existing Tags')
+      .setName('Reuse existing tags')
       .setDesc('Use existing tags from the vault as context to prevent inconsistencies. \nNote: If you have many tags, this increases the context size and may increase API costs.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.useExistingTags)
@@ -184,10 +185,10 @@ class AutoTaggerSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Tag Output Language')
+      .setName('Tag output language')
       .setDesc('Select the language for the generated tags.')
       .addDropdown(dropdown => dropdown
-        .addOption('Auto', 'Auto (Match Article)')
+        .addOption('Auto', 'Auto (match article)')
         .addOption('English', 'English')
         .addOption('Japanese', 'Japanese')
         .setValue(this.plugin.settings.outputLanguage)
@@ -197,7 +198,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
         }));
 
     new Setting(containerEl)
-      .setName('Max Tags')
+      .setName('Max tags')
       .setDesc('Maximum number of tags to generate')
       .addText(text => text
         .setPlaceholder('5')

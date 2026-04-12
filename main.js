@@ -951,7 +951,7 @@ var AutoTaggerPlugin = class extends import_obsidian.Plugin {
     if (!file)
       return;
     if (!this.settings.geminiApiKey) {
-      new import_obsidian.Notice("Please set your Gemini API Key in the settings.");
+      new import_obsidian.Notice("Please set your Gemini API key in the settings.");
       return;
     }
     try {
@@ -971,7 +971,8 @@ var AutoTaggerPlugin = class extends import_obsidian.Plugin {
       });
       let existingTagsString = "";
       if (this.settings.useExistingTags) {
-        const allTags = Object.keys(this.app.metadataCache.getTags()).map((tag) => tag.replace(/^#/, ""));
+        const metadataCache = this.app.metadataCache;
+        const allTags = Object.keys(metadataCache.getTags()).map((tag) => tag.replace(/^#/, ""));
         existingTagsString = `
 **Please select appropriate tags from the following existing tag list as much as possible (to prevent inconsistencies):**
 [${allTags.join(", ")}]
@@ -992,10 +993,10 @@ Text:
 ${content}
             `;
       const result = await model.generateContent(prompt);
-      const response = await result.response;
+      const response = result.response;
       const tagsRaw = JSON.parse(response.text());
       const tags = tagsRaw.map((tag) => {
-        return tag.trim().replace(/[ \u3000]+/g, "_").replace(/^#/, "").replace(/[#,\[\]()]/g, "");
+        return tag.trim().replace(/[ \u3000]+/g, "_").replace(/^#/, "").replace(/[#,[\]()]/g, "");
       }).filter((tag) => tag.length > 0);
       await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
         if (!frontmatter["tags"]) {
@@ -1023,26 +1024,26 @@ var AutoTaggerSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("Gemini API Key").setDesc("Enter your Google Gemini API Key").addText((text) => {
-      text.setPlaceholder("API Key").setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Gemini API key").setDesc("Enter your Google Gemini API key").addText((text) => {
+      text.setPlaceholder("API key").setValue(this.plugin.settings.geminiApiKey).onChange(async (value) => {
         this.plugin.settings.geminiApiKey = value;
         await this.plugin.saveSettings();
       });
       text.inputEl.type = "password";
     });
-    new import_obsidian.Setting(containerEl).setName("Gemini Model Name").setDesc("Specify the model name (e.g. gemini-2.5-flash)").addText((text) => text.setPlaceholder("gemini-2.5-flash").setValue(this.plugin.settings.geminiModel).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Gemini model name").setDesc("Specify the model name (e.g. gemini-2.5-flash)").addText((text) => text.setPlaceholder("gemini-2.5-flash").setValue(this.plugin.settings.geminiModel).onChange(async (value) => {
       this.plugin.settings.geminiModel = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Reuse Existing Tags").setDesc("Use existing tags from the vault as context to prevent inconsistencies. \nNote: If you have many tags, this increases the context size and may increase API costs.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useExistingTags).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Reuse existing tags").setDesc("Use existing tags from the vault as context to prevent inconsistencies. \nNote: If you have many tags, this increases the context size and may increase API costs.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useExistingTags).onChange(async (value) => {
       this.plugin.settings.useExistingTags = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Tag Output Language").setDesc("Select the language for the generated tags.").addDropdown((dropdown) => dropdown.addOption("Auto", "Auto (Match Article)").addOption("English", "English").addOption("Japanese", "Japanese").setValue(this.plugin.settings.outputLanguage).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Tag output language").setDesc("Select the language for the generated tags.").addDropdown((dropdown) => dropdown.addOption("Auto", "Auto (match article)").addOption("English", "English").addOption("Japanese", "Japanese").setValue(this.plugin.settings.outputLanguage).onChange(async (value) => {
       this.plugin.settings.outputLanguage = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Max Tags").setDesc("Maximum number of tags to generate").addText((text) => text.setPlaceholder("5").setValue(String(this.plugin.settings.maxTags)).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Max tags").setDesc("Maximum number of tags to generate").addText((text) => text.setPlaceholder("5").setValue(String(this.plugin.settings.maxTags)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num)) {
         this.plugin.settings.maxTags = num;
