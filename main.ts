@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, MarkdownView, MarkdownFileInfo, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface AutoTaggerSettings {
@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS: AutoTaggerSettings = {
 }
 
 export default class AutoTaggerPlugin extends Plugin {
-  settings: AutoTaggerSettings;
+  settings!: AutoTaggerSettings;
 
   async onload() {
     await this.loadSettings();
@@ -26,7 +26,8 @@ export default class AutoTaggerPlugin extends Plugin {
     this.addCommand({
       id: 'generate-tags',
       name: 'Generate tags for active note',
-      editorCallback: async (editor: Editor, view: MarkdownView) => {
+      editorCallback: async (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
+        // eslint-disable-next-line obsidianmd/ui/sentence-case
         new Notice("Generating tags...");
         await this.generateTags(view.file);
       }
@@ -51,6 +52,7 @@ export default class AutoTaggerPlugin extends Plugin {
     if (!file) return;
 
     if (!this.settings.geminiApiKey) {
+      // eslint-disable-next-line obsidianmd/ui/sentence-case
       new Notice("Please set your Gemini API key in the settings.");
       return;
     }
@@ -151,6 +153,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Gemini API key')
+      // eslint-disable-next-line obsidianmd/ui/sentence-case
       .setDesc('Enter your Google Gemini API key')
       .addText(text => {
         text
@@ -165,8 +168,10 @@ class AutoTaggerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Gemini model name')
+      // eslint-disable-next-line obsidianmd/ui/sentence-case
       .setDesc('Specify the model name (e.g. gemini-2.5-flash)')
       .addText(text => text
+        // eslint-disable-next-line obsidianmd/ui/sentence-case
         .setPlaceholder('gemini-2.5-flash')
         .setValue(this.plugin.settings.geminiModel)
         .onChange(async (value) => {
@@ -176,6 +181,7 @@ class AutoTaggerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Reuse existing tags')
+      // eslint-disable-next-line obsidianmd/ui/sentence-case
       .setDesc('Use existing tags from the vault as context to prevent inconsistencies. \nNote: If you have many tags, this increases the context size and may increase API costs.')
       .addToggle(toggle => toggle
         .setValue(this.plugin.settings.useExistingTags)
